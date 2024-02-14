@@ -7,57 +7,40 @@ using UnityEngine.UI;
 
 public class ShopPanelController : MonoBehaviour
 {
+    #region Actions
     public static Action onPlay;
     public static Action onIncreaseStamina;
     public static Action onIncreaseIncome;
-    public static Action onIncreaseSpeed;
+    public static Action onIncreaseSpeed; 
+    #endregion
 
     #region SerializedFields
+    #region Buttons
     [SerializeField] private Button tapToPlayButton;
     [SerializeField] private Button staminaLevelUpgradeButtton;
     [SerializeField] private Button incomeLevelUpgradeButtton;
-    [SerializeField] private Button speedLevelUpgradeButtton;
+    [SerializeField] private Button speedLevelUpgradeButtton; 
+    #endregion
 
+    [SerializeField] private Image FillBar;
+
+    #region Texts
     [SerializeField] private TextMeshProUGUI moneyText;
     [SerializeField] private TextMeshProUGUI staminaLevelText;
     [SerializeField] private TextMeshProUGUI incomeLevelText;
     [SerializeField] private TextMeshProUGUI speedLevelText;
     #endregion
+    #endregion
+
+    #region Privates
     private int _money;
     private int _staminaLevel;
     private int _incomeLevel;
-    private int _speedLevel;
-    private void OnEnable()
+    private int _speedLevel; 
+    #endregion
+    private void Awake()
     {
-        onIncreaseStamina += OnIncreaseStamina;
-        onIncreaseIncome += OnIncreaseIncome;
-        onIncreaseSpeed += OnIncreaseSpeed;
-    }
-
-    private void OnIncreaseStamina()
-    {
-        _staminaLevel = FeatureManager.Instance.GetStaminaLevel();
-        staminaLevelText.SetText("lvl " + _staminaLevel);
-        Refresh();
-    }
-
-    private void OnIncreaseIncome()
-    {
-        _incomeLevel = FeatureManager.Instance.GetIncomeLevel();
-        incomeLevelText.SetText("lvl " + _incomeLevel);
-        Refresh();
-    }
-    private void OnIncreaseSpeed()
-    {
-        _speedLevel = FeatureManager.Instance.GetSpeedLevel();
-        speedLevelText.SetText("lvl " + _speedLevel);
-        Refresh();
-    }
-    private void OnDisable()
-    {
-        onIncreaseStamina -= OnIncreaseStamina;
-        onIncreaseIncome -= OnIncreaseIncome;
-        onIncreaseSpeed -= OnIncreaseSpeed;
+        FillBar.fillAmount = .1f;
     }
     private void Start()
     {
@@ -154,12 +137,18 @@ public class ShopPanelController : MonoBehaviour
             ScoreManager.Instance.SpendMoney(FeatureManager.Instance.
                 GetUpgradeCostAmount(_staminaLevel));
             onIncreaseStamina?.Invoke();
+            _staminaLevel = FeatureManager.Instance.GetStaminaLevel();
+            staminaLevelText.SetText("lvl " + _staminaLevel);
+            Refresh();
         });
         incomeLevelUpgradeButtton.onClick.AddListener(() =>
         {
             ScoreManager.Instance.SpendMoney(FeatureManager.Instance.
                 GetUpgradeCostAmount(_incomeLevel));
-            onIncreaseIncome?.Invoke();           
+            onIncreaseIncome?.Invoke();
+            _incomeLevel = FeatureManager.Instance.GetIncomeLevel();
+            incomeLevelText.SetText("lvl " + _incomeLevel);
+            Refresh();
         });
 
         speedLevelUpgradeButtton.onClick.AddListener(() =>
@@ -167,6 +156,9 @@ public class ShopPanelController : MonoBehaviour
             ScoreManager.Instance.SpendMoney(FeatureManager.Instance.
                 GetUpgradeCostAmount(_speedLevel));
             onIncreaseSpeed?.Invoke();
+            _speedLevel = FeatureManager.Instance.GetSpeedLevel();
+            speedLevelText.SetText("lvl " + _speedLevel);
+            Refresh();
         });
     }
 }

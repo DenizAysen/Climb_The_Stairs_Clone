@@ -6,6 +6,7 @@ using UnityEngine.EventSystems;
 
 public class PlayerController : MonoBehaviour
 {
+    public static Action<float> OnClimb;
     #region Serialized Fields
     [SerializeField] private Stair[] stairs;
     [SerializeField] private float stairClimbCD = .5f; 
@@ -76,13 +77,13 @@ public class PlayerController : MonoBehaviour
     {
         UnSubscribeEvents();
     } 
-    #endregion
     private void UnSubscribeEvents()
     {
         PlayerHealth.OnDeath -= OnDeath;
         LevelManager.OnTryAgain += OnRestartScene;
         ShopPanelController.onPlay -= OnPlay;
     }
+    #endregion
     void Update()
     {
         if (Input.GetMouseButton(0) && !IsPointerOverUIElement())
@@ -106,9 +107,10 @@ public class PlayerController : MonoBehaviour
             _playerHealth.RegenerateHealth();
         }
     }
+    #region Climb Mechanic
     private bool CanClimbStair()
     {
-        bool canClimb = Time.time >= _lastClimbedStairTime && stairIndex < stairs.Length 
+        bool canClimb = Time.time >= _lastClimbedStairTime && stairIndex < stairs.Length
             && !_isClimbing /*&& stairIndex != stairs.Length - 1*/;
         if (canClimb)
         {
@@ -119,7 +121,6 @@ public class PlayerController : MonoBehaviour
     }
     private void ClimbStair()
     {
-        //Debug.Log(LeanTween.isTweening(gameObject));
         if (!LeanTween.isTweening(gameObject))
         {
             //Debug.Log("Burasi calisti");
@@ -134,14 +135,16 @@ public class PlayerController : MonoBehaviour
             {
                 _playerHealth.TakeDamage(20f);
             }
-            transform.Rotate(0, 15f, 0);
+            //transform.Rotate(0, 15f, 0);
+            LeanTween.rotateAround(gameObject, Vector3.up, 15f, stairClimbCD);
             _climbedDistance = (stairIndex + 1) * 1.73f;
             if (_climbedDistance > 100f)
                 _climbedDistance = 100f;
             ScoreManager.OnMoneyIncreased?.Invoke();
             SignBoardController.OnDistanceClosed?.Invoke(_climbedDistance);
             LeanTween.move(gameObject, _climbPointPosition, stairClimbCD).setOnComplete(ClimbNextStair);
-        }      
+            OnClimb?.Invoke(((float) stairIndex / (stairs.Length - 1)));
+        }
     }
     private void ClimbNextStair()
     {
@@ -153,7 +156,8 @@ public class PlayerController : MonoBehaviour
         {
             _playerAnimationController.StopClimbingStairsAnim();
         }
-    }
+    } 
+    #endregion
     private bool IsPointerOverUIElement()
     {
         var eventData = new PointerEventData(EventSystem.current)
