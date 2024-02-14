@@ -12,6 +12,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private GameObject shopPanel;
     [SerializeField] private GameObject gamePanel;
     [SerializeField] private GameObject losePanel;
+    [SerializeField] private GameObject winPanel;
     [SerializeField] private GameObject pausePanel;
 
     private void Awake()
@@ -36,6 +37,7 @@ public class UIManager : MonoBehaviour
         GamePanelController.onPausePanelOpen += OnPausePanelOpen;
         LevelManager.OnContinue += OnContinue;
         PausePanelController.OnPausePanelClosed += OnPausePanelClosed;
+        PlayerController.OnReachedFinalStair += OnReachedFinalStair;
 
         PlayerHealth.OnDeath += OnDeath;
     }
@@ -60,6 +62,11 @@ public class UIManager : MonoBehaviour
         pausePanel.SetActive(false);
         Time.timeScale = 1.0f;
     }
+    private void OnReachedFinalStair()
+    {
+        gamePanel.SetActive(false);
+        winPanel.SetActive(true);
+    }
     private void OnDeath()
     {
         gamePanel.SetActive(false);
@@ -78,6 +85,7 @@ public class UIManager : MonoBehaviour
         GamePanelController.onPausePanelOpen -= OnPausePanelOpen;
         LevelManager.OnContinue -= OnContinue;
         PausePanelController.OnPausePanelClosed -= OnPausePanelClosed;
+        PlayerController.OnReachedFinalStair -= OnReachedFinalStair;
 
         PlayerHealth.OnDeath -= OnDeath;
     }

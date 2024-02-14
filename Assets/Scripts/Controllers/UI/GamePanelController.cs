@@ -10,6 +10,7 @@ public class GamePanelController : MonoBehaviour
     public static Action onPausePanelOpen;
 
     [SerializeField] private Button pausebutton;
+    [SerializeField] private TextMeshProUGUI levelText;
     [SerializeField] private TextMeshProUGUI moneyText;
     [SerializeField] private Image FillBar;
     private void Awake()
@@ -22,6 +23,7 @@ public class GamePanelController : MonoBehaviour
             onPausePanelOpen?.Invoke();
         });
         moneyText.text = ((int)ScoreManager.Instance.GetMoney()).ToString();
+        levelText.text = "Level " + LevelManager.Instance.Level;
     }
     private void OnEnable()
     {

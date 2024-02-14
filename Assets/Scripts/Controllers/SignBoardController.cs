@@ -46,7 +46,14 @@ public class SignBoardController : MonoBehaviour
     private void SubscribeEvents()
     {
         OnDistanceClosed += DistanceClosed;
+        LevelManager.OnNextLevel += OnNextLevel;
     }
+
+    private void OnNextLevel()
+    {
+        PlayerPrefs.DeleteKey("lastClimbedStair");
+    }
+
     private void OnDisable()
     {
         UnSubscribeEvents();
@@ -55,6 +62,7 @@ public class SignBoardController : MonoBehaviour
     private void UnSubscribeEvents()
     {
         OnDistanceClosed -= DistanceClosed;
+        LevelManager.OnNextLevel -= OnNextLevel;
     } 
     #endregion
     private void CreateLastClimbedPosSignBoard()

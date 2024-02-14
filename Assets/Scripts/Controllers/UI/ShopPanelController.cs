@@ -25,6 +25,7 @@ public class ShopPanelController : MonoBehaviour
     [SerializeField] private Image FillBar;
 
     #region Texts
+    [SerializeField] private TextMeshProUGUI levelText;
     [SerializeField] private TextMeshProUGUI moneyText;
     [SerializeField] private TextMeshProUGUI staminaLevelText;
     [SerializeField] private TextMeshProUGUI incomeLevelText;
@@ -52,6 +53,8 @@ public class ShopPanelController : MonoBehaviour
     }
     private void SyncShopUI()
     {
+        SetLevelText();
+
         SetMoneyText();
 
         SetLevelTexts();
@@ -62,6 +65,7 @@ public class ShopPanelController : MonoBehaviour
 
         AddListenerToButtons();
     }
+    private void SetLevelText() => levelText.text = "Level " + LevelManager.Instance.Level;
     private void SetMoneyText() => moneyText.text = _money.ToString();
     private void SetLevelTexts()
     {

@@ -20,6 +20,7 @@ public class PlayerEffectController : MonoBehaviour
     private void SubscribeEvents()
     {
         PlayerHealth.OnDeath += DestroyAllParticles;
+        PlayerController.OnReachedFinalStair += DestroyAllParticles;
     }
 
     public void CreateSweatingParticles(int amount)
@@ -68,5 +69,6 @@ public class PlayerEffectController : MonoBehaviour
     private void UnSubscribeEvents()
     {
         PlayerHealth.OnDeath -= DestroyAllParticles;
+        PlayerController.OnReachedFinalStair -= DestroyAllParticles;
     }
 }

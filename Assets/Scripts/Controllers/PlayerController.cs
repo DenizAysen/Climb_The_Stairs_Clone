@@ -7,9 +7,14 @@ using UnityEngine.EventSystems;
 public class PlayerController : MonoBehaviour
 {
     public static Action<float> OnClimb;
+    public static Action OnReachedFinalStair;
+
     #region Serialized Fields
     [SerializeField] private Stair[] stairs;
-    [SerializeField] private float stairClimbCD = .5f; 
+    [SerializeField] private float stairClimbCD = .5f;
+    [SerializeField] private Transform jumpPoint;
+
+    [SerializeField] private AnimationCurve jumpAnimCurve;
     #endregion
 
     #region Privates
@@ -18,10 +23,19 @@ public class PlayerController : MonoBehaviour
 
     private float _lastClimbedStairTime = 0f;
     private float _climbedDistance;
+    private float _playerJumpPointY;
+    private float _totalDistance;
+    private float _jumpSpeed;
+
     private int stairIndex;
+
     private bool _isClimbing = false;
     private bool _isTouching = false;
+    private bool _climbedAllStairs = false;
+    private bool _reachedJumpPoint = false;
+
     private Vector3 _climbPointPosition;
+    private Vector3 _positionXZ;
     #endregion
 
     #region Unity Methods
@@ -55,7 +69,6 @@ public class PlayerController : MonoBehaviour
                 PlayerPrefs.SetInt("lastClimbedStair", stairIndex + 1);
             }
         }
-        //OnRestartScene();
     }
     private void OnRestartScene()
     {
@@ -65,22 +78,15 @@ public class PlayerController : MonoBehaviour
             {
                 stair.gameObject.GetComponent<Rigidbody>().useGravity = true;
                 stair.gameObject.GetComponent<BoxCollider>().enabled = true;
-            }
-            
+            }            
         }
     }
-    private void OnPlay()
-    {
-        stairClimbCD = FeatureManager.Instance.GetClimbSpeed();
-    }
-    private void OnDisable()
-    {
-        UnSubscribeEvents();
-    } 
+    private void OnPlay() => stairClimbCD = FeatureManager.Instance.GetClimbSpeed();
+    private void OnDisable() => UnSubscribeEvents();
     private void UnSubscribeEvents()
     {
         PlayerHealth.OnDeath -= OnDeath;
-        LevelManager.OnTryAgain += OnRestartScene;
+        LevelManager.OnTryAgain -= OnRestartScene;
         ShopPanelController.onPlay -= OnPlay;
     }
     #endregion
@@ -100,11 +106,28 @@ public class PlayerController : MonoBehaviour
             _playerAnimationController.StopClimbingStairsAnim();
             _isTouching = false;
         }
-        if (!_isTouching)
+
+        if (!_isTouching || !_climbedAllStairs)
         {
             if (_playerHealth.IsPlayerFullHealth())
                 return;
             _playerHealth.RegenerateHealth();
+        }
+
+        if (_climbedAllStairs)
+        {
+            if (_reachedJumpPoint)
+                return;
+
+            _positionXZ = new Vector3(transform.position.x,jumpPoint.position.y,transform.position.z);
+            float distance = Vector3.Distance(_positionXZ, jumpPoint.position);
+            float distanceNormalized = 1 - (distance / _totalDistance);
+            float positionY = jumpAnimCurve.Evaluate(distanceNormalized) + _playerJumpPointY;
+            transform.position = new Vector3(transform.position.x,positionY,transform.position.z);
+            if(Vector3.Distance(transform.position,jumpPoint.position) < .1f)
+            {
+                _reachedJumpPoint = true;
+            }
         }
     }
     #region Climb Mechanic
@@ -116,15 +139,12 @@ public class PlayerController : MonoBehaviour
         {
             _lastClimbedStairTime = Time.time + stairClimbCD;
         }
-        //Debug.Log(_lastClimbedStairTime);
         return canClimb;
     }
     private void ClimbStair()
     {
         if (!LeanTween.isTweening(gameObject))
-        {
-            //Debug.Log("Burasi calisti");
-            //Debug.Log(stairClimbCD);
+        { 
             _isClimbing = true;
             _playerAnimationController.PlayClimbingStairsAnim();
             if (!stairs[stairIndex].gameObject.activeSelf)
@@ -135,7 +155,6 @@ public class PlayerController : MonoBehaviour
             {
                 _playerHealth.TakeDamage(20f);
             }
-            //transform.Rotate(0, 15f, 0);
             LeanTween.rotateAround(gameObject, Vector3.up, 15f, stairClimbCD);
             _climbedDistance = (stairIndex + 1) * 1.73f;
             if (_climbedDistance > 100f)
@@ -154,7 +173,11 @@ public class PlayerController : MonoBehaviour
 
         if (stairIndex == stairs.Length)
         {
-            _playerAnimationController.StopClimbingStairsAnim();
+            _playerAnimationController.StopClimbingStairsAnim();;
+            OnReachedFinalStair?.Invoke();
+            SetupJump();
+            LeanTween.moveX(gameObject, jumpPoint.position.x, 1f);
+            LeanTween.moveZ(gameObject, jumpPoint.position.z, 1f);
         }
     } 
     #endregion
@@ -167,5 +190,14 @@ public class PlayerController : MonoBehaviour
         List<RaycastResult> results = new List<RaycastResult>();
         EventSystem.current.RaycastAll(eventData, results);
         return results.Count > 0;
+    }
+    private void SetupJump()
+    {
+        _playerJumpPointY = transform.position.y;
+        _climbedAllStairs = true;
+        _positionXZ = transform.position;
+        _positionXZ.y = jumpPoint.position.y;
+        _totalDistance = Vector3.Distance(_positionXZ, jumpPoint.position);
+        _jumpSpeed = 15f;
     }
 }
